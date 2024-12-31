@@ -73,8 +73,49 @@ resource "aws_route_table" "formation_route_table_natgw" {
   }
 }
 
-resource "aws_route_table_association" "formation_route_table_association" {
-  count          = length(aws_subnet.formation_private_subnet)
+resource "aws_route_table_association" "formation_route_table_igw_public_subnets" {
+  count          = length(aws_availability_zone.available.names)
+  subnet_id      = aws_subnet.formation_public_subnet[count.index].id
+  route_table_id = aws_route_table.formation_route_table_igw.id
+}
+
+resource "aws_route_table_association" "formation_route_table_igw_private_subnets" {
+  count          = length(aws_availability_zone.available.names)
   subnet_id      = aws_subnet.formation_private_subnet[count.index].id
   route_table_id = aws_route_table.formation_route_table_natgw.id
+}
+
+resource "aws_security_group" "formation_sg" {
+  vpc_id      = aws_vpc.formation_vpc.id
+  name        = "${var.Name}-sg"
+  description = "Managedby OpenTofu"
+  tags = {
+    "Name" = "${var.Name}-sg"
+  }
+  ingress = [
+    {
+      cidr_blocks      = ["0.0.0.0/0"]
+      description      = "SSH port"
+      from_port        = 22
+      to_port          = 22
+      protocol         = "tcp"
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    },
+  ]
+  egress = [
+    {
+      cidr_blocks      = ["0.0.0.0/0"]
+      description      = "All traffic"
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }
+  ]
 }
