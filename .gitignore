@@ -1,0 +1,3 @@
+./Backend/.terraform
+./Backend/terraform.tfstate
+./Backend/terraform.lock.hcl
